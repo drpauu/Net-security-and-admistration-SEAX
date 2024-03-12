@@ -25,9 +25,9 @@ start_time=$(date +%s)
 # Inicia l'anàlisi
 target_ip="10.1.1.1"
 port=80
-echo " ║  ---------------------------------------------------------------  "
-echo " ║   Anàlisi de connectivitat a l'equip $target_ip en el port $port/$protocol.  "
-echo " ║  ---------------------------------------------------------------  "
+echo " |  ---------------------------------------------------------------  "
+echo " |   Anàlisi de connectivitat a l'equip $target_ip en el port $port/$protocol.  "
+echo " |  ---------------------------------------------------------------  "
 # Informació de l'equip
 hostname=$(hostname)
 ip=$(hostname -I | awk '{print $1}')
@@ -154,22 +154,68 @@ echo " |  Intefície per defecte adreça de xarxa:     [$morts]    $resultat"
 echo "  "
 resultat=""
 morts=""
+# Troba la gateway per defecte
+default_gateway=$(ip route show default | awk '/default/ {print $3}')
+if [ -n "$default_gateway" ]; then
+    resultat="$default_gateway"
+    morts="ok"
+else
+    morts="ko"
+fi
 echo " |  Router per defecte definit:                [$morts]    $resultat"
+
 resultat=""
 morts=""
+# Comprova si la gateway per defecte respon a pings
+ping_response=$(ping -c 1 $default_gateway | grep 'time=')
+if [[ $ping_response =~ time=([0-9.]+) ]]; then
+    resultat="rtt ${BASH_REMATCH[1]} ms"
+    morts="ok"
+else
+    morts="ko"
+fi
 echo " |  Router per defecte respon:                 [$morts]    $resultat"
+
 resultat=""
 morts=""
+# Comprova si la gateway per defecte té accés a Internet 
+ping_response_internet=$(ping -c 1 1.1.1.1 | grep 'time=')
+if [[ $ping_response_internet =~ time=([0-9.]+) ]]; then
+    resultat="rtt ${BASH_REMATCH[1]} ms (a 1.1.1.1)"
+    morts="ok"
+else
+    resultat="<<sense accés>>"
+    morts="ko"
+fi
 echo " |  Router per defecte té accés a Internet:    [$morts]    $resultat"
 
 echo "  "
+resultat=""
+morts=""
+# Extreu els servidors DNS configurats del sistema
+dns_servers=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}')
+if [ -n "$dns_servers" ]; then
+    resultat=$dns_servers
+    morts="ok"
+else
+    morts="ko"
+fi
 echo " |  Servidor DNS per defecte definit:          [$morts]    $resultat"
+
 resultat=""
 morts=""
+# Intenta fer ping al primer servidor DNS per comprovar la seva disponibilitat
+read -ra dns_array <<< "$dns_servers"  # Converteix la cadena en un array
+ping_response=$(ping -c 1 ${dns_array[0]} | grep 'time=')
+if [[ $ping_response =~ time=([0-9.]+) ]]; then
+    resultat="${dns_array[0]}"
+    morts="ok"
+else
+    morts="ko"
+fi
 echo " |  Servidor DNS per defecte respon:           [$morts]    $resultat"
-resultat=""
-morts=""
 echo "  ---------------------------------------------------------------  "
+
 #---------------------------------------------------------------------------------
 
 #SCRIPT "2"-----------------------------------------------------------------------
@@ -241,8 +287,8 @@ echo "  ---------------------------------------------------------------  "
 end_time=$(date +%s)
 duration=$((end_time - start_time))
 end_date=$(date '+%Y-%m-%d a les %H:%M:%S')
-echo " ║  Data de finalització:   $end_date                "
-echo " ║  Durada de les tasques:  ${duration}s                                       "
+echo " |  Data de finalització:   $end_date                "
+echo " |  Durada de les tasques:  ${duration}s                                       "
 echo "  ---------------------------------------------------------------  "
 # Substitueix la quarta línia del fitxer
 #awk -v n=4 -v s="$FINISH_LINE1" 'NR == n {print s; next} {print}' "$LOG_FILE" > temp && mv temp "$LOG_FILE"
