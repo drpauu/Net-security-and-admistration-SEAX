@@ -12,9 +12,9 @@ else
 	port=$2
 	protocol=$3
 
-	target_ip="10.1.1.1"
-	port=80
-	protocol="tcp"
+	#target_ip="10.1.1.1"
+	#port=80
+	#protocol="tcp"
 
 
 	# Nom del fitxer de l'script
@@ -288,41 +288,13 @@ else
 	echo "  ">> $LOG_FILE
 	resultat=""
 	morts=""
-	# Obté la informació de la ruta per al destí
-    route_info=$(ip route get $target_ip)
-
-    # Comprova si el destí està en la mateixa xarxa
-    if echo $route_info | grep -q "dev lo"; then
-        morts="ok"
-        resultat="<< Mateixa xarxa >>"
-        echo " |  Router de sortida cap al destí:            [$morts]    $resultat" >> $LOG_FILE
-        morts="ko"
-        resultat="<< Omès >>"
-        echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat" >> $LOG_FILE
-        echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat" >> $LOG_FILE
-    else
-        # Extreu l'adreça IP del router de sortida
-        router_ip=$(echo $route_info | awk '{for(i=1;i<=NF;i++) if ($i=="via") print $(i+1)}')
-
-        # Comprova si s'ha trobat un router de sortida
-        if [ -z "$router_ip" ]; then
-            morts="ko"
-        else
-            resultat=$router_ip
-            morts="ok"
-        fi
-        echo " |  Router de sortida cap al destí:            [$morts]    $resultat" >> $LOG_FILE
-
-
-        resultat=""
-        morts=""
-        echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat" >> $LOG_FILE
-
-
-        resultat=""
-        morts=""
-        echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat" >> $LOG_FILE
-    fi
+	echo " |  Router de sortida cap al destí:            [$morts]    $resultat">> $LOG_FILE
+	resultat=""
+	morts=""
+	echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat">> $LOG_FILE
+	resultat=""
+	morts=""
+	echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat">> $LOG_FILE
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	#---------------------------------------------------------------------------------
 
@@ -332,34 +304,47 @@ else
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	resultat=""
 	morts=""
-    # Realitza una consulta DNS inversa per obtenir el nom de l'equip
-    dns_name=$(dig +short -x $target_ip)
-    exit_code=$?
-
-    # Comprova el codi de sortida de `dig`
-    if [ $exit_code -ne 0 ]; then
-        morts="ko"
-    else
-        morts="ok"
-        if [[ -z "$dns_name" ]]; then
-            resultat="-"
-            else
-            resultat=$dns_name
-        fi
-    fi
+	dns=$(dig -x $target_ip +short | tail -n 1)
+	if [ -z $dns ]; then
+		morts="ko"
+	else
+		morts="ok"
+	fi
+	resultat=$dns
 	echo " |  Destí nom DNS:                             [$morts]    $resultat">> $LOG_FILE
-	resultat=""
+	resultat=$target_ip
 	morts=""
+	if [ -z $resultat ]; then
+		morts="ko"
+	else
+		morts="ok"
+	fi
 	echo " |  Destí adreça IP:                           [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
+	port_dest=$(nmap -p $port --open $target_ip | grep "open" | awk '{print $1 "/" $3}')
+	if [ -z $port_dest ]; then
+		morts="ko"
+	else
+		morts="ok"
+	fi
+	resultat=$port_dest
 	echo " |  Destí port servei:                         [$morts]    $resultat">> $LOG_FILE
 	echo "  ">> $LOG_FILE
 	resultat=""
 	morts=""
+	latency=$(ping -c 1 $target_ip | grep "ttl" | awk -F 'time=' '{print $2}' | awk '{print int($1)}')
+	if [ -z $latency ]; then
+		morts="ko"
+		resultat="<< L'equip no respon >>"
+	else
+		morts="ok"
+		resultat=$latency",000 ms"
+	fi
 	echo " |  Destí abastable:                           [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
+	resultat=$( (echo >/dev/tcp/[dirección_ip]/[puerto]) &>/dev/null && echo "Destí respon al servei: [ok]    latència $(($(date +%s%N) - $start_time))" )
 	echo " |  Destí respon al servei:                    [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
@@ -375,8 +360,8 @@ else
 	end_time=$(date +%s)
 	duration=$((end_time - start_time))
 	end_date=$(date '+%Y-%m-%d a les %H:%M:%S')
-	echo " |  Data de finalització:   $end_date                ">> $LOG_FILE
-	echo " |  Durada de les tasques:  ${duration}s                                       ">> $LOG_FILE
+	echo " ║  Data de finalització:   $end_date                ">> $LOG_FILE
+	echo " ║  Durada de les tasques:  ${duration}s                                       ">> $LOG_FILE
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	# Substitueix la quarta línia del fitxer
 	#awk -v n=4 -v s="$FINISH_LINE1" 'NR == n {print s; next} {print}' "$LOG_FILE" > temp && mv temp "$LOG_FILE"
