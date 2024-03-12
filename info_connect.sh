@@ -12,10 +12,6 @@ else
 	port=$2
 	protocol=$3
 
-	#target_ip="10.1.1.1"
-	#port=80
-	#protocol="tcp"
-
 
 	# Nom del fitxer de l'script
 	script_name="info_connect.sh"
@@ -219,52 +215,80 @@ else
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	resultat=""
 	morts=""
-	interface=$(ip route show | awk '/default/ {print $5}')
-	
-	if [ -z $interface ]; then
-		morts="ko"
-	else
-		morts="ok"
-	fi
-	resultat=$interface
+    # Find the network interface used to reach the given IP address
+    interface=$(ip route get "$target_ip" | awk '{for (i=1; i<=NF; i++) if ($i=="dev") {print $(i+1); exit}}')
+
+    # Check if the 'interface' variable is empty
+    if [ -z "$interface" ]; then
+        # Print "-" if no interface is found
+        resultat="-"
+        morts="ko"
+    else
+        # Print the name of the interface
+        resultat=$interface
+        morts="ok"
+    fi
 	echo " |  Interfície de sortida cap al destí:        [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
-	mac=$(ip route | awk '/default/ {print $5}' | xargs ip link show | awk '/link\/ether/ {print $2}')
-	
-	if [ -z $mac ]; then
-		morts="ko"
-	else
-		morts="ok"
-	fi
-	resultat=$mac
+	# Store the first argument as 'interface_name', representing the network interface
+    interface_name=$interface
+
+    # Attempt to read the MAC address of the specified interface. 
+    # If the interface does not exist, this will prevent an error message.
+    mac_address=$(cat /sys/class/net/"$interface_name"/address 2>/dev/null)
+
+    # Check if 'mac_address' is empty or if the interface does not exist
+    if [ -z "$mac_address" ]; then
+        # Print "-" as a placeholder for no MAC address found
+        resultat="-"
+        morts="ko"
+    else 
+        # Print the found MAC address
+        morts="ok"
+        resultat=$mac_address
+    fi
 	echo " |  Interfície de sortida adreça MAC:          [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
-	interface_state=$(ip route | awk '/default/ {print $5}' | xargs ip link show | awk '/state/ {print $9}')
-	
-	if [ -z $interface_state ]; then
-		morts="ko"
-	else
-		morts="ok"
-	fi
-	resultat=$interface_state
+	network_interface=$interface
+
+    # Attempt to retrieve the operational state of the network interface
+    operational_state=$(ip link show "$network_interface" 2>/dev/null | awk '/state/{print $9}')
+
+    # Determine the state of the interface and print an appropriate message
+    case $operational_state in
+        "UP")
+            resultat="up"
+            morts="ok"
+            ;;
+        "DOWN")
+            resultat="down"
+            morts="ok"
+            ;;
+        *)
+            resultat="-"
+            morts="ko"
+            ;;
+    esac
 	echo " |  Interfície de sortida estat:               [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
-	interface_ip=$(ip route get 1.1.1.1 | grep -oP 'src \K\S+')
-	
-	if [ -z $interface_ip ]; then
-		morts="ko"
-	else
-		morts="ok"
-	fi
-	resultat=$interface_ip
+	# Extract the primary IP address of the specified interface
+    primary_ip=$(ip -4 addr show "$interface_name" | grep -oP 'inet \K[\d.]+' | head -n 1)
+
+    # Check if the 'primary_ip' variable has a value; print it if so, otherwise print a placeholder
+    if [ -n "$primary_ip" ]; then
+        resultat=$primary_ip
+        morts="ok"
+    else
+        resultat="-"
+        morts="ko"
+    fi
 	echo " |  Interfície de sortida adreça IP:           [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
-	ip_address=$(ip route | awk '/default/ {print $3}')
-	rtt=$(ping -c 4 $ip_address | tail -1 | awk -F'/' '{print $5}')
+	rtt=$(ping -c 4 $primary_ip | tail -1 | awk -F'/' '{print $5}')
 	if [ -z $rtt ]; then
 		morts="ko"
 	else
@@ -288,13 +312,47 @@ else
 	echo "  ">> $LOG_FILE
 	resultat=""
 	morts=""
-	echo " |  Router de sortida cap al destí:            [$morts]    $resultat">> $LOG_FILE
-	resultat=""
-	morts=""
-	echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat">> $LOG_FILE
-	resultat=""
-	morts=""
-	echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat">> $LOG_FILE
+	# Obté la informació de la ruta per al destí
+    route_info=$(ip route get $target_ip)
+
+    # Identify the gateway IP associated with the specified network interface
+    gateway_ip=$(ip route show dev "$network_interface" | grep 'default via' | awk '{print $3}')
+
+    # Output the gateway IP if found, otherwise print a placeholder
+    if [ -n "$gateway_ip" ]; then
+        resultat=$gateway_ip
+        morts="ok"
+    else
+        resultat="-"
+        morts="ko"
+    fi
+    echo " |  Router de sortida cap al destí:            [$morts]    $resultat" >> $LOG_FILE
+    
+    resultat=""
+    morts=""
+    rtt=$(ping -c 4 $gateway_ip | tail -1 | awk -F'/' '{print $5}')
+	if [ -z $rtt ]; then
+		morts="ko"
+	else
+		morts="ok"
+	fi
+	resultat=$rtt
+    echo " |  Router de sortida cap al destí respon:     [$morts]    rtt $resultat ms" >> $LOG_FILE
+
+
+    resultat=""
+    morts=""
+    # Comprova si la gateway per defecte té accés a Internet 
+    ping_response_internet=$(ping -c 1 1.1.1.1 | grep 'time=')
+    if [[ $ping_response_internet =~ time=([0-9.]+) ]]; then
+        resultat="rtt ${BASH_REMATCH[1]} ms (a 1.1.1.1)"
+        morts="ok"
+    else
+        resultat="<<sense accés>>"
+        morts="ko"
+    fi
+    echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat" >> $LOG_FILE
+
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	#---------------------------------------------------------------------------------
 
