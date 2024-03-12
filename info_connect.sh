@@ -31,44 +31,83 @@ echo " ║  ---------------------------------------------------------------  "
 # Informació de l'equip
 hostname=$(hostname)
 ip=$(hostname -I | awk '{print $1}')
-echo " ║  Equip:                  $hostname [$ip]                         "
+echo " |  Equip:                  $hostname [$ip]                         "
 # Informació de l'usuari
 user_info=$(id)
-echo " ║  Usuari:                 $user_info    "
+echo " |  Usuari:                 $user_info    "
 # Informació del sistema operatiu
 if command -v lsb_release &> /dev/null; then
     os_info=$(lsb_release -d | cut -f 2)
 else
     os_info=$(grep PRETTY_NAME /etc/os-release | cut -d '=' -f 2 | tr -d '"')
 fi
-echo " ║  Sistema operatiu:       $os_info         "
+echo " |  Sistema operatiu:       $os_info         "
 # Versions dels scripts
-echo " ║  Versió:                 $script_name $script_version ($script_date_version)     "
-echo " ║                          info_funcions.sh $functions_script_version ($functions_script_date)    "
+echo " |  Versió:                 $script_name $script_version ($script_date_version)     "
+echo " |                          info_funcions.sh $functions_script_version ($functions_script_date)    "
 # Data d'inici
 start_date=$(date '+%Y-%m-%d a les %H:%M:%S')
-echo " ║  Data d'inici:           $start_date                "
+echo " |  Data d'inici:           $start_date                "
 # Espera (simulació de tasques)
 sleep 9
 # Data de finalització i durada
 end_time=$(date +%s)
 duration=$((end_time - start_time))
 end_date=$(date '+%Y-%m-%d a les %H:%M:%S')
-echo " ║  Data de finalització:   $end_date                "
-echo " ║  Durada de les tasques:  ${duration}s                                       "
+echo " |  Data de finalització:   $end_date                "
+echo " |  Durada de les tasques:  ${duration}s                                       "
 echo "  ---------------------------------------------------------------  "
 #FINAL INFO INICIAL ------------------------------------------------------------------------------
 
 #SCRIPT "1"-----------------------------------------------------------------------
-
+echo "  ---------------------------------------------------------------  "
+echo " │  Estat dels recursos per defecte."            
+echo "  ---------------------------------------------------------------  "
+echo " |  Intefície per defefcte definida:           "
+echo " |  Intefície per defefcte adreça MAC:         "
+echo " |  Intefície per defefcte estat:              "
+echo " |  Intefície per defefcte adreça IP:          "
+echo " |  Intefície per defefcte adreça IP respon:   "
+echo " |  Intefície per defefcte adreça de xarxa:    "
+echo "  "
+echo " |  Router per defecte definit:                "
+echo " |  Router per defecte respon:                 "
+echo " |  Router per defecte té accés a Internet:    "
+echo "  "
+echo " |  Servidor DNS per defecte definit:          "
+echo " |  Servidor DNS per defecte respon:           "
+echo "  ---------------------------------------------------------------  "
 #---------------------------------------------------------------------------------
 
 #SCRIPT "2"-----------------------------------------------------------------------
-
+echo "  ---------------------------------------------------------------  "
+echo " │  Estat dels recursos dedicats.       " 
+echo "  ---------------------------------------------------------------  "
+echo " |  Interfície de sortida cap al destí:        "
+echo " |  Interfície de sortida adreça MAC:          "
+echo " |  Interfície de sortida estat:               "
+echo " |  Interfície de sortida adreça IP:           "
+echo " |  Interfície de sortida adreça IP respon:    "
+echo " |  Interfície de sortida adreça de xarxa:     "
+echo "  "
+echo " |  Router de sortida cap al destí:            "
+echo " |  Router de sortida cap al destí respon:     "
+echo " |  Router de sortida té accés a Internet:     "
+echo "  ---------------------------------------------------------------  "
 #---------------------------------------------------------------------------------
 
 #SCRIPT "3"-----------------------------------------------------------------------
-
+echo "  ---------------------------------------------------------------  "
+echo " │  Estat de l'equip destí.       " 
+echo "  ---------------------------------------------------------------  "
+echo " |  Destí nom DNS:                             "
+echo " |  Destí adreça IP:                           "
+echo " |  Destí port servei:                         "
+echo "  "
+echo " |  Destí abastable:                           "
+echo " |  Destí respon al servei:                    "
+echo " |  Destí versió del servei:                   "
+echo "  ---------------------------------------------------------------  "
 #---------------------------------------------------------------------------------
 
 
