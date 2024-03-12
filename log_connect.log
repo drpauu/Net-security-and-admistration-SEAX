@@ -1,0 +1,58 @@
+ |  ---------------------------------------------------------------  
+ |   Anàlisi de connectivitat a l'equip 10.1.1.1 en el port 80/tcp.  
+ |  ---------------------------------------------------------------  
+ |  Equip:                  paupc [192.168.1.146]                         
+ |  Usuari:                 uid=0(root) gid=0(root) grupos=0(root)    
+ |  Sistema operatiu:       Ubuntu 22.04.3 LTS         
+ |  Versió:                 info_connect.sh v.0.123 (28/04/2023)     
+ |                          info_funcions.sh v.0.123 (03/05/2023)    
+ |  Data d'inici:           2024-03-12 a les 20:00:43                
+ |  Data de finalització:   2024-03-12 a les 20:00:43                
+ |  Durada de les tasques:  0s                                       
+  ---------------------------------------------------------------  
+  ---------------------------------------------------------------  
+ │  Estat dels recursos per defecte.
+  ---------------------------------------------------------------  
+ |  Intefície per defefcte definida:           [ok]    wlo1
+ |  Intefície per defefcte adreça MAC:         [ok]    64:79:f0:64:57:0d
+ |  Intefície per defefcte estat:              [ok]    UP
+ |  Intefície per defefcte adreça IP:          [ok]    192.168.1.146
+ |  Intefície per defefcte adreça IP respon:   [ok]    rtt 0.028 ms
+ |  Intefície per defecte adreça de xarxa:     [ok]    169.254.0.0/16
+192.168.1.0/24
+  
+ |  Router per defecte definit:                [ok]    192.168.1.1
+ |  Router per defecte respon:                 [ok]    rtt 5.21 ms
+ |  Router per defecte té accés a Internet:    [ok]    rtt 15.4 ms (a 1.1.1.1)
+  
+ |  Servidor DNS per defecte definit:          [ok]    rtt 15.4 ms (a 1.1.1.1)
+ |  Servidor DNS per defecte respon:           []    
+  ---------------------------------------------------------------  
+  ---------------------------------------------------------------  
+ │  Estat dels recursos dedicats.       
+  ---------------------------------------------------------------  
+ |  Interfície de sortida cap al destí:        [ok]    wlo1
+ |  Interfície de sortida adreça MAC:          [ok]    64:79:f0:64:57:0d
+ |  Interfície de sortida estat:               [ok]    UP
+ |  Interfície de sortida adreça IP:           [ok]    192.168.1.146
+ |  Interfície de sortida adreça IP respon:    [ok]    rtt 4.689 ms
+ |  Interfície de sortida adreça de xarxa:     [ok]    192.168.1.146
+  
+ |  Router de sortida cap al destí:            [ok]    192.168.1.1
+ |  Router de sortida cap al destí respon:     []    
+ |  Router de sortida té accés a Internet:     []    
+  ---------------------------------------------------------------  
+  ---------------------------------------------------------------  
+ │  Estat de l'equip destí.       
+  ---------------------------------------------------------------  
+ |  Destí nom DNS:                             [ok]    -
+ |  Destí adreça IP:                           []    
+ |  Destí port servei:                         []    
+  
+ |  Destí abastable:                           []    
+ |  Destí respon al servei:                    []    
+ |  Destí versió del servei:                   []    
+  ---------------------------------------------------------------  
+ |  Data de finalització:   2024-03-12 a les 20:00:46                
+ |  Durada de les tasques:  3s                                       
+  ---------------------------------------------------------------  

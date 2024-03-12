@@ -12,9 +12,9 @@ else
 	port=$2
 	protocol=$3
 
-	#target_ip="10.1.1.1"
-	#port=80
-	#protocol="tcp"
+	target_ip="10.1.1.1"
+	port=80
+	protocol="tcp"
 
 
 	# Nom del fitxer de l'script
@@ -135,22 +135,17 @@ else
 	# Determina l'adreça de xarxa
 	resultat=""
 	morts=""
-	network_addresses=$(ip route | grep $default_iface | grep -v default | awk '{print $1}')
-	readarray -t address_array <<<"$network_addresses"
+    network_address=$(ip route | grep $default_iface | grep -v default | awk '{print $1}')
 
-	if [ "${#address_array[@]}" -ge 2 ]; then
-		# Selecciona específicament la segona adreça si n'hi ha més d'una
-		resultat="${address_array[1]}"
-		morts="ok"
-	elif [ "${#address_array[@]}" -eq 1 ]; then
-		# Si només hi ha una adreça, utilitza-la
-		resultat="${address_array[0]}"
-		morts="ok"
-	else
-		# Cap adreça trobada
-		resultat="<<configuració de xarxa absent>>"
-		morts="ko"
-	fi
+    if [ -n "$network_address" ]; then
+        # Si només hi ha una adreça, utilitza-la
+        resultat=$network_address
+        morts="ok"
+    else
+        # Cap adreça trobada
+        resultat="<<configuració de xarxa absent>>"
+        morts="ko"
+    fi
 
 	echo " |  Intefície per defecte adreça de xarxa:     [$morts]    $resultat" >> $LOG_FILE
  
@@ -159,23 +154,40 @@ else
 	echo "  " >> $LOG_FILE
 	resultat=""
 	morts=""
-	default_router=$(ip route show | awk '/default/ {print $3}')
-	
-	if [ -z $default_router ]; then
-		morts="ko"
-	else
-		morts="ok"
-	fi
-	resultat=$default_router
+	# Troba la gateway per defecte
+    default_gateway=$(ip route show default | awk '/default/ {print $3}')
+    if [ -n "$default_gateway" ]; then
+        resultat="$default_gateway"
+        morts="ok"
+    else
+        morts="ko"
+    fi
 	echo " |  Router per defecte definit:                [$morts]    $resultat" >> $LOG_FILE
 	resultat=""
 	morts=""
+    # Comprova si la gateway per defecte respon a pings
+    ping_response=$(ping -c 1 $default_gateway | grep 'time=')
+    if [[ $ping_response =~ time=([0-9.]+) ]]; then
+        resultat="rtt ${BASH_REMATCH[1]} ms"
+        morts="ok"
+    else
+        morts="ko"
+    fi
 	echo " |  Router per defecte respon:                 [$morts]    $resultat" >> $LOG_FILE
 	resultat=""
 	morts=""
+    # Comprova si la gateway per defecte té accés a Internet 
+    ping_response_internet=$(ping -c 1 1.1.1.1 | grep 'time=')
+    if [[ $ping_response_internet =~ time=([0-9.]+) ]]; then
+        resultat="rtt ${BASH_REMATCH[1]} ms (a 1.1.1.1)"
+        morts="ok"
+    else
+        resultat="<<sense accés>>"
+        morts="ko"
+    fi
 	echo " |  Router per defecte té accés a Internet:    [$morts]    $resultat">> $LOG_FILE
 
-	echo "  "
+	echo "  " >> $LOG_FILE
 	echo " |  Servidor DNS per defecte definit:          [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
@@ -260,13 +272,41 @@ else
 	echo "  ">> $LOG_FILE
 	resultat=""
 	morts=""
-	echo " |  Router de sortida cap al destí:            [$morts]    $resultat">> $LOG_FILE
-	resultat=""
-	morts=""
-	echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat">> $LOG_FILE
-	resultat=""
-	morts=""
-	echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat">> $LOG_FILE
+	# Obté la informació de la ruta per al destí
+    route_info=$(ip route get $target_ip)
+
+    # Comprova si el destí està en la mateixa xarxa
+    if echo $route_info | grep -q "dev lo"; then
+        morts="ok"
+        resultat="<< Mateixa xarxa >>"
+        echo " |  Router de sortida cap al destí:            [$morts]    $resultat" >> $LOG_FILE
+        morts="ko"
+        resultat="<< Omès >>"
+        echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat" >> $LOG_FILE
+        echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat" >> $LOG_FILE
+    else
+        # Extreu l'adreça IP del router de sortida
+        router_ip=$(echo $route_info | awk '{for(i=1;i<=NF;i++) if ($i=="via") print $(i+1)}')
+
+        # Comprova si s'ha trobat un router de sortida
+        if [ -z "$router_ip" ]; then
+            morts="ko"
+        else
+            resultat=$router_ip
+            morts="ok"
+        fi
+        echo " |  Router de sortida cap al destí:            [$morts]    $resultat" >> $LOG_FILE
+
+
+        resultat=""
+        morts=""
+        echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat" >> $LOG_FILE
+
+
+        resultat=""
+        morts=""
+        echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat" >> $LOG_FILE
+    fi
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	#---------------------------------------------------------------------------------
 
@@ -276,6 +316,21 @@ else
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	resultat=""
 	morts=""
+    # Realitza una consulta DNS inversa per obtenir el nom de l'equip
+    dns_name=$(dig +short -x $target_ip)
+    exit_code=$?
+
+    # Comprova el codi de sortida de `dig`
+    if [ $exit_code -ne 0 ]; then
+        morts="ko"
+    else
+        morts="ok"
+        if [[ -z "$dns_name" ]]; then
+            resultat="-"
+            else
+            resultat=$dns_name
+        fi
+    fi
 	echo " |  Destí nom DNS:                             [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
@@ -304,8 +359,8 @@ else
 	end_time=$(date +%s)
 	duration=$((end_time - start_time))
 	end_date=$(date '+%Y-%m-%d a les %H:%M:%S')
-	echo " ║  Data de finalització:   $end_date                ">> $LOG_FILE
-	echo " ║  Durada de les tasques:  ${duration}s                                       ">> $LOG_FILE
+	echo " |  Data de finalització:   $end_date                ">> $LOG_FILE
+	echo " |  Durada de les tasques:  ${duration}s                                       ">> $LOG_FILE
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	# Substitueix la quarta línia del fitxer
 	#awk -v n=4 -v s="$FINISH_LINE1" 'NR == n {print s; next} {print}' "$LOG_FILE" > temp && mv temp "$LOG_FILE"
