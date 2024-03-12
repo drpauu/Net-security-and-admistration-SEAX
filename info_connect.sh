@@ -188,12 +188,28 @@ else
 	echo " |  Router per defecte té accés a Internet:    [$morts]    $resultat">> $LOG_FILE
 
 	echo "  " >> $LOG_FILE
+    resultat=""
+	morts=""
+    dns_servers=$(grep 'nameserver' /etc/resolv.conf | awk '{print $2}') #retornar llista de nameserver -dns
+    if [ -z "$dns_servers" ]; then  # Si retorna una llista dns buida
+        morts="ko"
+        resultat="-"
+    else 
+        resultat=$dns_servers
+        morts="ok"
+    fi
 	echo " |  Servidor DNS per defecte definit:          [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
+    dns_servers=$(grep 'nameserver' /etc/resolv.conf | awk '{print $2}'| head -n 1)
+    if [ -z "$dns_servers" ]; then  # Si retorna un dns per defecte buit
+        resultat="-"
+        morts="ko"
+    else 
+        resultat=$dns_servers
+        morts="ok"
+    fi
 	echo " |  Servidor DNS per defecte respon:           [$morts]    $resultat">> $LOG_FILE
-	resultat=""
-	morts=""
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	#---------------------------------------------------------------------------------
 

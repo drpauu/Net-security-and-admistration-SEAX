@@ -6,8 +6,8 @@
  |  Sistema operatiu:       Ubuntu 22.04.3 LTS         
  |  Versió:                 info_connect.sh v.0.123 (28/04/2023)     
  |                          info_funcions.sh v.0.123 (03/05/2023)    
- |  Data d'inici:           2024-03-12 a les 20:00:43                
- |  Data de finalització:   2024-03-12 a les 20:00:43                
+ |  Data d'inici:           2024-03-12 a les 20:09:49                
+ |  Data de finalització:   2024-03-12 a les 20:09:49                
  |  Durada de les tasques:  0s                                       
   ---------------------------------------------------------------  
   ---------------------------------------------------------------  
@@ -22,11 +22,11 @@
 192.168.1.0/24
   
  |  Router per defecte definit:                [ok]    192.168.1.1
- |  Router per defecte respon:                 [ok]    rtt 5.21 ms
- |  Router per defecte té accés a Internet:    [ok]    rtt 15.4 ms (a 1.1.1.1)
+ |  Router per defecte respon:                 [ok]    rtt 8.07 ms
+ |  Router per defecte té accés a Internet:    [ok]    rtt 16.0 ms (a 1.1.1.1)
   
- |  Servidor DNS per defecte definit:          [ok]    rtt 15.4 ms (a 1.1.1.1)
- |  Servidor DNS per defecte respon:           []    
+ |  Servidor DNS per defecte definit:          [ok]    127.0.0.53
+ |  Servidor DNS per defecte respon:           [ok]    127.0.0.53
   ---------------------------------------------------------------  
   ---------------------------------------------------------------  
  │  Estat dels recursos dedicats.       
@@ -35,7 +35,7 @@
  |  Interfície de sortida adreça MAC:          [ok]    64:79:f0:64:57:0d
  |  Interfície de sortida estat:               [ok]    UP
  |  Interfície de sortida adreça IP:           [ok]    192.168.1.146
- |  Interfície de sortida adreça IP respon:    [ok]    rtt 4.689 ms
+ |  Interfície de sortida adreça IP respon:    [ok]    rtt 6.371 ms
  |  Interfície de sortida adreça de xarxa:     [ok]    192.168.1.146
   
  |  Router de sortida cap al destí:            [ok]    192.168.1.1
@@ -53,6 +53,6 @@
  |  Destí respon al servei:                    []    
  |  Destí versió del servei:                   []    
   ---------------------------------------------------------------  
- |  Data de finalització:   2024-03-12 a les 20:00:46                
- |  Durada de les tasques:  3s                                       
+ |  Data de finalització:   2024-03-12 a les 20:09:53                
+ |  Durada de les tasques:  4s                                       
   ---------------------------------------------------------------  
