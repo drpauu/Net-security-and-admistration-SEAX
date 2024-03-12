@@ -48,8 +48,6 @@ echo " |                          info_funcions.sh $functions_script_version ($f
 # Data d'inici
 start_date=$(date '+%Y-%m-%d a les %H:%M:%S')
 echo " |  Data d'inici:           $start_date                "
-# Espera (simulació de tasques)
-sleep 9
 # Data de finalització i durada
 end_time=$(date +%s)
 duration=$((end_time - start_time))
@@ -65,25 +63,112 @@ echo " │  Estat dels recursos per defecte."
 echo "  ---------------------------------------------------------------  "
 # Troba la interfície de xarxa per defecte
 default_iface=$(ip route show default | awk '/default/ {print $5}')
+resultat=""
 morts=""
 if [ -n "$default_iface" ]; then
     morts="ok"
+    resultat=$default_iface
 else
     morts="ko"
+    resultat="<<no hi ha ruta predeterminada>>"
 fi
-echo " |  Intefície per defefcte definida:           [$morts]"
-echo " |  Intefície per defefcte adreça MAC:         [$morts]"
-echo " |  Intefície per defefcte estat:              [$morts]"
-echo " |  Intefície per defefcte adreça IP:          [$morts]"
-echo " |  Intefície per defefcte adreça IP respon:   [$morts]"
-echo " |  Intefície per defefcte adreça de xarxa:    [$morts]"
+echo " |  Intefície per defefcte definida:           [$morts]    $resultat"
+
+# Troba l'adreça MAC de la interfície
+resultat=""
+morts=""
+mac_address=$(ip link show $default_iface | awk '/ether/ {print $2}')
+if [ -n "$mac_address" ]; then
+    resultat=$mac_address
+    morts="ok"
+else
+    resultat="<<interfície sense adreça MAC>>"
+    morts="ko"
+fi
+echo " |  Intefície per defefcte adreça MAC:         [$morts]    $resultat"
+
+# Troba l'estat de la interfície
+resultat=""
+morts=""
+iface_status=$(ip link show $default_iface | awk '/state/ {print $9}')
+if [ -n "$iface_status" ]; then
+    resultat=$iface_status
+    morts="ok"
+else
+    resultat="<<interfície desactivada o inexistent>>"
+    morts="ko"
+fi
+echo " |  Intefície per defefcte estat:              [$morts]    $resultat"
+
+# Troba l'adreça IP de la interfície
+resultat=""
+morts=""
+ip_address=$(ip addr show $default_iface | awk '/inet / {print $2}' | cut -d/ -f1)
+if [ -n "$ip_address" ]; then
+    resultat=$ip_address
+    morts="ok"
+else
+    resultat="<<sense adreça IP assignada>>"
+    morts="ko"
+fi
+echo " |  Intefície per defefcte adreça IP:          [$morts]    $resultat"
+
+# Comprova si l'adreça IP respon
+resultat=""
+morts=""
+# Executa el ping i extreu el temps de resposta
+ping_response=$(ping -c 1 $ip_address | grep 'time=')
+if [[ $ping_response =~ time=([0-9.]+) ]]; then
+    resultat="rtt ${BASH_REMATCH[1]} ms"
+    morts="ok"
+else
+    resultat="<<xarxa inactiva o aïllada>>"
+    morts="ko"
+fi
+echo " |  Intefície per defefcte adreça IP respon:   [$morts]    $resultat"
+
+# Determina l'adreça de xarxa
+resultat=""
+morts=""
+network_addresses=$(ip route | grep $default_iface | grep -v default | awk '{print $1}')
+readarray -t address_array <<<"$network_addresses"
+
+if [ "${#address_array[@]}" -ge 2 ]; then
+    # Selecciona específicament la segona adreça si n'hi ha més d'una
+    resultat="${address_array[1]}"
+    morts="ok"
+elif [ "${#address_array[@]}" -eq 1 ]; then
+    # Si només hi ha una adreça, utilitza-la
+    resultat="${address_array[0]}"
+    morts="ok"
+else
+    # Cap adreça trobada
+    resultat="<<configuració de xarxa absent>>"
+    morts="ko"
+fi
+
+echo " |  Intefície per defecte adreça de xarxa:     [$morts]    $resultat"
+
+
+
 echo "  "
-echo " |  Router per defecte definit:                [$morts]"
-echo " |  Router per defecte respon:                 [$morts]"
-echo " |  Router per defecte té accés a Internet:    [$morts]"
+resultat=""
+morts=""
+echo " |  Router per defecte definit:                [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Router per defecte respon:                 [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Router per defecte té accés a Internet:    [$morts]    $resultat"
+
 echo "  "
-echo " |  Servidor DNS per defecte definit:          [$morts]"
-echo " |  Servidor DNS per defecte respon:           [$morts]"
+echo " |  Servidor DNS per defecte definit:          [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Servidor DNS per defecte respon:           [$morts]    $resultat"
+resultat=""
+morts=""
 echo "  ---------------------------------------------------------------  "
 #---------------------------------------------------------------------------------
 
@@ -91,16 +176,34 @@ echo "  ---------------------------------------------------------------  "
 echo "  ---------------------------------------------------------------  "
 echo " │  Estat dels recursos dedicats.       " 
 echo "  ---------------------------------------------------------------  "
-echo " |  Interfície de sortida cap al destí:        [$morts]"
-echo " |  Interfície de sortida adreça MAC:          [$morts]"
-echo " |  Interfície de sortida estat:               [$morts]"
-echo " |  Interfície de sortida adreça IP:           [$morts]"
-echo " |  Interfície de sortida adreça IP respon:    [$morts]"
-echo " |  Interfície de sortida adreça de xarxa:     [$morts]"
+resultat=""
+morts=""
+echo " |  Interfície de sortida cap al destí:        [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Interfície de sortida adreça MAC:          [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Interfície de sortida estat:               [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Interfície de sortida adreça IP:           [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Interfície de sortida adreça IP respon:    [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Interfície de sortida adreça de xarxa:     [$morts]    $resultat"
 echo "  "
-echo " |  Router de sortida cap al destí:            [$morts]"
-echo " |  Router de sortida cap al destí respon:     [$morts]"
-echo " |  Router de sortida té accés a Internet:     [$morts]"
+resultat=""
+morts=""
+echo " |  Router de sortida cap al destí:            [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Router de sortida cap al destí respon:     [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Router de sortida té accés a Internet:     [$morts]    $resultat"
 echo "  ---------------------------------------------------------------  "
 #---------------------------------------------------------------------------------
 
@@ -108,13 +211,27 @@ echo "  ---------------------------------------------------------------  "
 echo "  ---------------------------------------------------------------  "
 echo " │  Estat de l'equip destí.       " 
 echo "  ---------------------------------------------------------------  "
-echo " |  Destí nom DNS:                             [$morts]"
-echo " |  Destí adreça IP:                           [$morts]"
-echo " |  Destí port servei:                         [$morts]"
+resultat=""
+morts=""
+echo " |  Destí nom DNS:                             [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Destí adreça IP:                           [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Destí port servei:                         [$morts]    $resultat"
 echo "  "
-echo " |  Destí abastable:                           [$morts]"
-echo " |  Destí respon al servei:                    [$morts]"
-echo " |  Destí versió del servei:                   [$morts]"
+resultat=""
+morts=""
+echo " |  Destí abastable:                           [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Destí respon al servei:                    [$morts]    $resultat"
+resultat=""
+morts=""
+echo " |  Destí versió del servei:                   [$morts]    $resultat"
+resultat=""
+morts=""
 echo "  ---------------------------------------------------------------  "
 #---------------------------------------------------------------------------------
 
