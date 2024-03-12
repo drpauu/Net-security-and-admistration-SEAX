@@ -333,24 +333,38 @@ else
 	echo "  ">> $LOG_FILE
 	resultat=""
 	morts=""
-	latency=$(ping -c 1 $target_ip | grep "ttl" | awk -F 'time=' '{print $2}' | awk '{print int($1)}')
+	latency=$(nmap -p $port $target_ip 2>&1 | grep "Host is up" | awk '{print $7}')
+	latency=$((latency * 1000))
 	if [ -z $latency ]; then
 		morts="ko"
 		resultat="<< L'equip no respon >>"
 	else
 		morts="ok"
-		resultat=$latency",000 ms"
+		resultat=$latency" ms"
 	fi
 	echo " |  Destí abastable:                           [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
-	resultat=$( (echo >/dev/tcp/[dirección_ip]/[puerto]) &>/dev/null && echo "Destí respon al servei: [ok]    latència $(($(date +%s%N) - $start_time))" )
+	respon=""
+	if [ -z $respon ]; then
+		morts="ko"
+		resultat="<< El port no respon >>"
+	else
+		morts="ok"
+		resultat=$respon" ms"
+	fi
 	echo " |  Destí respon al servei:                    [$morts]    $resultat">> $LOG_FILE
 	resultat=""
 	morts=""
+	version=""
+	if [ -z $version ]; then
+		morts="ko"
+		resultat="<< Versió no identificada >>"
+	else
+		morts="ok"
+		resultat=$version" ms"
+	fi
 	echo " |  Destí versió del servei:                   [$morts]    $resultat">> $LOG_FILE
-	resultat=""
-	morts=""
 	echo "  ---------------------------------------------------------------  ">> $LOG_FILE
 	#---------------------------------------------------------------------------------
 
